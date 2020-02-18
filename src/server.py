@@ -20,20 +20,20 @@ class ClientThread(threading.Thread):
         threading.Thread.__init__(self)
         self.csocket = clientsocket
         self.client_address = client_address
+        self.aes = AES_KEY  # aes key
+        self.session_nr = 0  # stage of the algorithm
         print("New connection added: ", self.client_address)
 
     def run(self):
         print("Connection from : ", self.client_address)
-        msg = ''
         while True:
             data = self.csocket.recv(MAX_SIZE)
             message = pickle.loads(data)
             code = OK
             if code == OK:
+                print("from client", message)
                 self.csocket.sendall(pickle.dumps(code))
                 break
-            print("from client", msg)
-            self.csocket.send(bytes(msg, 'UTF-8'))
         print("Client at ", self.client_address, " disconnected...")
 
 
@@ -54,7 +54,7 @@ class Server:
     def __init__(self):
         self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # socket object
         self.aes = AES_KEY  # aes key
-        self.clientsocket = {}
+        self.clientsocket = []
         self.session_list = []  # list of dict with all the open sessions and their status
         # { 'id'        : id,
         #   'sequence'  : sequence}
@@ -75,12 +75,13 @@ class Server:
                 self.serversocket.listen(5)
                 clientsocket, addr = self.serversocket.accept()
                 print("Got a connection from " + Colors.WARNING + "%s" % str(addr) + Colors.ENDC)
-                self.clientsocket[str(id_clientsocket)] = clientsocket
-                newthread = ClientThread(addr, self.clientsocket[str(id_clientsocket)])
+                self.clientsocket.append(clientsocket)
+                newthread = ClientThread(addr, self.clientsocket[-1])
                 id_clientsocket += 1
                 newthread.start()
         finally:
-            self.clientsocket.close()
+            for cskt in self.clientsocket:
+                cskt.close()
 
     def parse_message(self):
         """
@@ -97,21 +98,6 @@ if __name__ == "__main__":
         srv = Server()
         srv.run()
     except KeyboardInterrupt:
-        srv.clientsocket.close()
+        for cs in srv.clientsocket:
+            cs.close()
         print(Colors.WARNING + "Shutting down ... " + Colors.ENDC)
-
-#
-# import socket, threading
-# LOCALHOST = "127.0.0.1"
-# PORT = 8080
-# server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-# server.bind((LOCALHOST, PORT))
-# print("Server started")
-# print("Waiting for client request..")
-# while True:
-#     server.listen(1)
-#     clientsock, clientAddress = server.accept()
-#     newthread = ClientThread(clientAddress, clientsock)
-#     newthread.start()
-

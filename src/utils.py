@@ -81,6 +81,13 @@ def aes_decode(nonce, ciphertext, tag, key):
         return pickle.loads(plaintext)
 
 
+def verify_nonce(n1, n2):
+    if n1 == n2:
+        return True
+    else:
+        return False
+
+
 def generate_nonce(length=8):
     """Generate pseudorandom number."""
     return ''.join([str(random.randint(0, 9)) for i in range(length)])
