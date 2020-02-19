@@ -30,9 +30,8 @@ class Node:
         self.server = ("127.0.0.1", PORT)
         self.aes = SHARED_KEY
         self.nodesocket.connect(self.server)
-        self.sequence = 0
         self.nonce = None
-        self.id = generate_nonce()
+        self.id = None
 
     def close_connection(self):
         """
@@ -48,7 +47,7 @@ class Node:
         """
         self.nonce = generate_nonce()
         n, ciphertext, tag = aes_encode(self.aes, self.nonce)
-        to_send = {'n': n, 'c': ciphertext, 't': tag}  # dictionary to send to the server
+        to_send = {'dest': 'setup', 'n': n, 'c': ciphertext, 't': tag}  # dictionary to send to the server
         self.nodesocket.sendall(pickle.dumps(to_send))
         data = pickle.loads(self.nodesocket.recv(MAX_SIZE))
         return data
@@ -67,12 +66,12 @@ class Node:
         c = data['c']
         t = data['t']
         n_s = aes_decode(n, c, t, self.aes)
-        self.nodesocket.sendall(pickle.dumps(n_s))
-        data = pickle.loads(self.nodesocket.recv(MAX_SIZE))
-        return data
+        to_send = {'id': self.id, 'dest': 'confirmation', 'n': n_s}
+        self.nodesocket.sendall(pickle.dumps(to_send))
+        data_return = pickle.loads(self.nodesocket.recv(MAX_SIZE))
+        return data_return
 
 
-# todo: server side
 def main(argv):
     try:
         _, _ = getopt.getopt(argv, "p:", ["path="])
@@ -82,6 +81,7 @@ def main(argv):
     c = Node()
     data = c.setup()  # data should contain the step ( 2 ) of the algorithm
     # { 'n_n': N_N, 'n': nonce_encryption, 'c': ciphertext, 't': tag }
+    c.id = data['id']  # set the given id from the server
     n_n = data['n_n']
     if verify_nonce(n_n, c.nonce):
         # if server verified the nonce, then continues with step ( 3 )
@@ -89,11 +89,8 @@ def main(argv):
         print(data)
     else:
         print(Colors.FAIL + "ERROR! Server Key is not verified!" + Colors.ENDC)
+        data = c.final_proof(data)
         # todo: Server might not PASS if it changes its key
-    c.nodesocket.sendall(pickle.dumps('hello'))
-    data = c.nodesocket.recv(MAX_SIZE)
-    msg = pickle.loads(data)
-    print(msg)
 
 
 if __name__ == "__main__":

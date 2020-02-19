@@ -76,9 +76,9 @@ def aes_decode(nonce, ciphertext, tag, key):
         print(Colors.WARNING + "The message is authentic!" + Colors.ENDC)
     except ValueError:
         print("Key incorrect or message corrupted!")
-        plaintext = ""
-    finally:
-        return pickle.loads(plaintext)
+        plaintext = 'error'
+        return plaintext
+    return pickle.loads(plaintext)
 
 
 def verify_nonce(n1, n2):

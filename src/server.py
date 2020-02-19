@@ -5,14 +5,22 @@ __copyright__ = "Copyright 2020, Arctic University of Norway"
 __email__ = "enrico.tedeschi@uit.no"
 
 import socket, threading
+from utils import generate_nonce, verify_nonce
 import sys
 import rsa
 import pickle
-from utils import Colors, PORT, MAX_SIZE, OK, NO_CONTENT, NOTFOUND, HOST, Verifier, aes_encode, aes_decode, TIME
+from utils import Colors, PORT, MAX_SIZE, \
+    OK, NO_CONTENT, NOTFOUND, HOST, Verifier, aes_encode, aes_decode, TIME, ACCEPTED
 import datetime
 import time
 
 AES_KEY = b'TheForceIsStrong'  # 16bit AES key
+"""
+process flow:
+    ( 1 ) N --> S: {N_N}K
+    ( 2 ) S --> N: N_N, {N_S}K
+    ( 3 ) N --> S: N_S
+"""
 
 
 class ClientThread(threading.Thread):
@@ -21,18 +29,52 @@ class ClientThread(threading.Thread):
         self.csocket = clientsocket
         self.client_address = client_address
         self.aes = AES_KEY  # aes key
-        self.session_nr = 0  # stage of the algorithm
+        self.client_id = {}  # dict with client id and n_s associated with it
+        # { id1 : server_nonce1,
+        #   id2 : server_nonce2,
+        #       ...
+        #   idn : server_noncen }
+        self.nonce = None
         print("New connection added: ", self.client_address)
 
     def run(self):
         print("Connection from : ", self.client_address)
         while True:
+            msg = ''
+            code = ACCEPTED
             data = self.csocket.recv(MAX_SIZE)
             message = pickle.loads(data)
-            code = OK
-            if code == OK:
-                print("from client", message)
-                self.csocket.sendall(pickle.dumps(code))
+            if message['dest'] == 'setup':
+                # step ( 1 ) incoming from the client
+                # decrypt message with n, c, t
+                n = message['n']
+                c = message['c']
+                t = message['t']
+                n_n = aes_decode(n, c, t, self.aes)
+                # generate server nonce for this particular node and assign an id to it
+                self.nonce = generate_nonce()
+                client_id = generate_nonce()
+                # generate unique key
+                while client_id in self.client_id:
+                    client_id = generate_nonce()
+                # assign a client id to a specific nonce
+                self.client_id[client_id] = self.nonce
+                # encrypt server nonce
+                n, c, t = aes_encode(self.aes, self.nonce)
+                to_send = {'id': client_id, 'n_n': n_n, 'n': n, 'c': c, 't': t}
+                self.csocket.sendall(pickle.dumps(to_send))
+                code = ACCEPTED
+            elif message['dest'] == 'confirmation':
+                # verify the node shares the same key
+                server_nonce_sent = self.client_id[message['id']]
+                if verify_nonce(server_nonce_sent, message['n']):
+                    code = OK
+                    msg = Colors.OKGREEN + 'CONGRATULATIONS, YOU ARE VERIFIED!' + Colors.ENDC
+                else:
+                    code = NOTFOUND
+                    msg = Colors.FAIL + "ERROR: Ah-ah-ah! You didn't say the magic word!" + Colors.ENDC
+            if code == OK or code == NOTFOUND:
+                self.csocket.sendall(pickle.dumps(msg))
                 break
         print("Client at ", self.client_address, " disconnected...")
 
@@ -55,9 +97,6 @@ class Server:
         self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # socket object
         self.aes = AES_KEY  # aes key
         self.clientsocket = []
-        self.session_list = []  # list of dict with all the open sessions and their status
-        # { 'id'        : id,
-        #   'sequence'  : sequence}
 
     def run(self):
         """
