@@ -75,7 +75,7 @@ def aes_decode(nonce, ciphertext, tag, key):
         cipher.verify(tag)
         print(Colors.WARNING + "The message is authentic!" + Colors.ENDC)
     except ValueError:
-        print("Key incorrect or message corrupted!")
+        print(Colors.FAIL + "Key incorrect or message corrupted!" + Colors.ENDC)
         plaintext = 'error'
         return plaintext
     return pickle.loads(plaintext)

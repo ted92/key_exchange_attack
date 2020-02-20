@@ -14,7 +14,7 @@ from utils import Colors, PORT, MAX_SIZE, \
 import datetime
 import time
 
-AES_KEY = b'TheForceIsStrong'  # 16bit AES key
+AES_KEY = b'<ThePathIsClear>'  # 16bit AES key
 """
 process flow:
     ( 1 ) N --> S: {N_N}K
@@ -38,11 +38,14 @@ class ClientThread(threading.Thread):
         print("New connection added: ", self.client_address)
 
     def run(self):
-        print("Connection from : ", self.client_address)
+        print("Connection from : " + Colors.WARNING, self.client_address, Colors.ENDC)
         while True:
             msg = ''
             code = ACCEPTED
             data = self.csocket.recv(MAX_SIZE)
+            while data == b'':
+                time.sleep(5)
+                data = self.csocket.recv(MAX_SIZE)
             message = pickle.loads(data)
             if message['dest'] == 'setup':
                 # step ( 1 ) incoming from the client
@@ -107,7 +110,6 @@ class Server:
         self.serversocket.bind((HOST, PORT))
         print("Listening on: " + Colors.BOLD + HOST + ":" + str(PORT) + Colors.ENDC)
         print("... waiting for a connection", file=sys.stderr)
-        id_clientsocket = 0
         try:
             while True:
                 # queue up to 5 requests
@@ -116,20 +118,10 @@ class Server:
                 print("Got a connection from " + Colors.WARNING + "%s" % str(addr) + Colors.ENDC)
                 self.clientsocket.append(clientsocket)
                 newthread = ClientThread(addr, self.clientsocket[-1])
-                id_clientsocket += 1
                 newthread.start()
         finally:
             for cskt in self.clientsocket:
                 cskt.close()
-
-    def parse_message(self):
-        """
-        get meaning of the message
-        {   'session_id'    : id,
-            'sequence'      : sequence,
-            'msg'           : message
-                        }
-        """
 
 
 if __name__ == "__main__":
