@@ -7,7 +7,6 @@ __email__ = "enrico.tedeschi@uit.no"
 import socket, threading
 from utils import generate_nonce, verify_nonce
 import sys
-import rsa
 import pickle
 from utils import Colors, PORT, MAX_SIZE, \
     OK, NO_CONTENT, NOTFOUND, HOST, Verifier, aes_encode, aes_decode, TIME, ACCEPTED

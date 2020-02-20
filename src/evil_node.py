@@ -8,9 +8,7 @@ __email__ = "enrico.tedeschi@uit.no"
 from utils import Colors, MAX_SIZE, PORT, aes_decode
 import socket
 import sys
-import rsa
 import getopt
-import re
 import pickle
 import time
 from utils import OK, Verifier, aes_encode, TIME, generate_nonce, verify_nonce
