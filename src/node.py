@@ -4,7 +4,7 @@ __author__ = "Enrico Tedeschi"
 __copyright__ = "Copyright 2020, Arctic University of Norway"
 __email__ = "enrico.tedeschi@uit.no"
 
-from utils import Colors, MAX_SIZE, PORT, aes_decode
+from utils import Colors, MAX_SIZE, PORT, HOST, aes_decode
 import socket
 import sys
 import getopt
@@ -15,6 +15,7 @@ from utils import OK, Verifier, aes_encode, TIME, generate_nonce, verify_nonce
 SHARED_KEY = b'<ThePathIsClear>'  # 16bit AES key
 
 
+# todo: visualize pretty prints for message exchange
 class Node:
     """
     Node class.
@@ -25,7 +26,7 @@ class Node:
     """
     def __init__(self):
         self.nodesocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = ("127.0.0.1", PORT)
+        self.server = (HOST, PORT)
         self.aes = SHARED_KEY
         self.nodesocket.connect(self.server)
         self.nonce = None
@@ -44,7 +45,9 @@ class Node:
         ( 1 ) step one of the algorithm
         """
         self.nonce = generate_nonce()
+        # print('nonce: ' + str(self.nonce))
         n, ciphertext, tag = aes_encode(self.aes, self.nonce)
+        # print('sending encrypted, (n, c, t) : (' + str(n) + ', ' + str(ciphertext) + ', ' + str(tag) + ')')
         to_send = {'dest': 'setup', 'n': n, 'c': ciphertext, 't': tag}  # dictionary to send to the server
         self.nodesocket.sendall(pickle.dumps(to_send))
         data = pickle.loads(self.nodesocket.recv(MAX_SIZE))

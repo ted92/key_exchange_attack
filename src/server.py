@@ -106,7 +106,7 @@ class Server:
         :return:
         """
         # bind to the port
-        self.serversocket.bind((HOST, PORT))
+        self.serversocket.bind(('0.0.0.0', PORT))
         print("Listening on: " + Colors.BOLD + HOST + ":" + str(PORT) + Colors.ENDC)
         print("... waiting for a connection", file=sys.stderr)
         try:

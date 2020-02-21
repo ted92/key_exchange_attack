@@ -5,7 +5,8 @@ __author__ = "Enrico Tedeschi"
 __copyright__ = "Copyright 2020, Arctic University of Norway"
 __email__ = "enrico.tedeschi@uit.no"
 
-from utils import Colors, MAX_SIZE, PORT, aes_decode
+from utils import Colors, MAX_SIZE, PORT, HOST, aes_decode
+from node import Node
 import socket
 import sys
 import getopt
@@ -16,7 +17,7 @@ from utils import OK, Verifier, aes_encode, TIME, generate_nonce, verify_nonce
 KEY = b'TheForceIsStrong'  # 16bit AES key
 
 
-class Node:
+class ENode(Node):
     """
     Node class which performs a REFLECTION ATTACK
     process flow:
@@ -27,20 +28,6 @@ class Node:
     ( 5 )   E --> S: N_S							    .1
 
     """
-    def __init__(self):
-        self.nodesocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = ("127.0.0.1", PORT)
-        self.aes = KEY
-        self.nodesocket.connect(self.server)
-        self.nonce = None
-        self.id = None
-
-    def close_connection(self):
-        """
-        close the open connection
-        :return:
-        """
-        self.nodesocket.close()
 
     def setup(self, n='', ciphertext='', tag=''):
         """
@@ -67,6 +54,7 @@ class Node:
                             'n'     : nonce_encryption,
                             'c'     : ciphertext,
                             't'     : tag }
+        :param n_s: nonce of the server already fetched
         ( 3 ) step three of the algorithm
         """
         if n_s == '':
@@ -86,13 +74,13 @@ def main(argv):
     except getopt.GetoptError:
         print("node.py -p <file_path>")
         sys.exit(2)
-    c1 = Node()  # first session open
+    c1 = ENode()  # first session open
     data = c1.setup()  # data should contain the step ( 2 ) of the algorithm
     n = data['n']
     c = data['c']
     t = data['t']
     # { 'n_n': N_N, 'n': nonce_encryption, 'c': ciphertext, 't': tag }
-    c2 = Node()
+    c2 = ENode()
     data = c2.setup(n, c, t)
     n_n = data['n_n']
     if not verify_nonce(n_n, c1.nonce):

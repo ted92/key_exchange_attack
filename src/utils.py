@@ -11,8 +11,8 @@ from Crypto.Cipher import AES
 import pickle
 import random
 
-HOST = socket.gethostbyname('localhost')
-PORT = 8300
+HOST = socket.gethostbyname(socket.gethostname())
+PORT = 5006
 # RESPONSES STATUS CODES:
 OK = "200 OK"
 CREATED = "201 Created"
