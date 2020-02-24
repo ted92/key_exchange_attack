@@ -13,7 +13,7 @@ from utils import Colors, PORT, MAX_SIZE, \
 import datetime
 import time
 
-AES_KEY = b'<ThePathIsClear>'  # 16bit AES key
+AES_KEY = b'TheForceIsStrong'  # 16bit AES key
 """
 process flow:
     ( 1 ) N --> S: {N_N}K
@@ -63,6 +63,10 @@ class ClientThread(threading.Thread):
                 self.client_id[client_id] = self.nonce
                 # encrypt server nonce
                 n, c, t = aes_encode(self.aes, self.nonce)
+                print(Colors.BOLD + 'S --> N: N_N, {N_S}K' + Colors.ENDC)
+                print('\t' + Colors.BOLD + 'N_N: ' + Colors.ENDC + str(n_n))
+                print('\t' + Colors.BOLD + 'N_S: ' + Colors.ENDC + str(self.nonce))
+                print('\t' + Colors.BOLD + '{N_S}K : (n, c, t)' + Colors.ENDC)
                 to_send = {'id': client_id, 'n_n': n_n, 'n': n, 'c': c, 't': t}
                 self.csocket.sendall(pickle.dumps(to_send))
                 code = ACCEPTED

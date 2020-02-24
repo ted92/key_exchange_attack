@@ -12,7 +12,7 @@ import pickle
 import time
 from utils import OK, Verifier, aes_encode, TIME, generate_nonce, verify_nonce
 
-SHARED_KEY = b'<ThePathIsClear>'  # 16bit AES key
+SHARED_KEY = b'TheForceIsStrong'  # 16bit AES key
 
 
 # todo: visualize pretty prints for message exchange
@@ -47,6 +47,10 @@ class Node:
         self.nonce = generate_nonce()
         # print('nonce: ' + str(self.nonce))
         n, ciphertext, tag = aes_encode(self.aes, self.nonce)
+        print(Colors.BOLD + 'N --> S: {N_N}K' + Colors.ENDC)
+        print('\t' + Colors.BOLD + 'N_N: ' + Colors.ENDC + str(self.nonce))
+        print('\t' + Colors.BOLD + 'K: ' + Colors.ENDC + str(self.aes))
+        print('\t' + Colors.BOLD + '{N_N}K : (n, c, t)' + Colors.ENDC)
         # print('sending encrypted, (n, c, t) : (' + str(n) + ', ' + str(ciphertext) + ', ' + str(tag) + ')')
         to_send = {'dest': 'setup', 'n': n, 'c': ciphertext, 't': tag}  # dictionary to send to the server
         self.nodesocket.sendall(pickle.dumps(to_send))
@@ -69,6 +73,8 @@ class Node:
         t = data['t']
         n_s = aes_decode(n, c, t, self.aes)
         to_send = {'id': self.id, 'dest': 'confirmation', 'n': n_s}
+        print(Colors.BOLD + 'N --> S: N_S' + Colors.ENDC)
+        print('\t' + Colors.BOLD + 'N_S: ' + Colors.ENDC + str(n_s))
         self.nodesocket.sendall(pickle.dumps(to_send))
         data_return = pickle.loads(self.nodesocket.recv(MAX_SIZE))
         return data_return
