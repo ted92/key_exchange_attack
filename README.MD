@@ -38,13 +38,18 @@ The numbers .1 and .2 identify the two different sessions that `E` opens with `S
 ### Prerequisites
 
 Libraries used, you might require to install:
-1. pickle
-2. pycrypto
-3. pycryptodome
+1. pycryptodome
+2. websocket
+3. websocket-client
 
-Example of installation using Python package manager pip:
+These libraries are listed in the `requirements.txt` file. So the only command you need to run is:
 ```bash
-❯ pip install pycrypto
+pip install -r requirements.txt
+```
+
+However, if you want to install single package just use:
+```bash
+❯ pip install pycryptodome
 ```
 
 To check you comply with the requirements you can check with:

@@ -14,7 +14,7 @@ import pickle
 import time
 from utils import OK, Verifier, aes_encode, TIME, generate_nonce, verify_nonce
 
-KEY = b'TheForceIsStrong'  # 16bit AES key
+KEY = b'TheForceIsString'  # 16bit AES key
 
 
 class ENode(Node):
