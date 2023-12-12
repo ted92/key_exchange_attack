@@ -12,10 +12,9 @@ import pickle
 import time
 from utils import OK, Verifier, aes_encode, TIME, generate_nonce, verify_nonce
 
-SHARED_KEY = b'TheForceIsString'  # 16bit AES key
+SHARED_KEY = b'TheForceIsStrong'  # 16bit AES key
 
 
-# todo: visualize pretty prints for message exchange
 class Node:
     """
     Node class.
